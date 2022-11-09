@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
@@ -15,22 +16,23 @@ from exclusionms.components import DynamicExclusionTolerance, ExclusionPoint
 
 st.header("Spectral Library Generator")
 st.write("Uses pyopenms and peptdeep")
-st.write("Streamlit only allocates 1GB for public apps. To ensure that your process isnt terminated try lowering the max peptide length.")
-st.write("Intensities are outputted as a flattened list [b1_z1,b1_z2,y1_z1,y1_z2,b1_modloss_z1,b1_modloss_z2,y1_modloss_z1,y1_modloss_z2, ... ,bn_z1,bn_z2,yn_z1,yn_z2,bn_modloss_z1,bn_modloss_z2,yn_modloss_z1,yn_modloss_z2]")
+
 
 def flatten(l):
     return [item for sublist in l for item in sublist]
 
+
 def update_progress_bar(progress, last_progress, total_items, update_frequency=0.1):
     return progress - last_progress >= total_items * update_frequency
+
 
 def convert_df(df_to_download):
     return df_to_download.to_csv(index=False).encode('ascii')
 
+
 mod_db = ModificationsDB()
 
 fasta_file = st.file_uploader("Choose a fasta file", type=".fasta")
-
 
 with st.expander("Digestion"):
     digestion_params = get_digestion_params()
@@ -111,10 +113,10 @@ if st.button("Generate Spectral Library"):
         peptide_col.metric(label="peptides", value=peptide_count)
         unique_peptide_col.metric(label="unique peptides", value=len(sequence_peptide_map))
 
-        data = {'peptide':[],'protein':[], 'charge':[], 'mass':[]}
+        data = {'peptide': [], 'protein': [], 'charge': [], 'mass': []}
         for peptide_sequence in sequence_to_protein_map:
             protein_ids = [protein.identifier for protein in sequence_to_protein_map[peptide_sequence]]
-            for charge in range(min_charge, max_charge+1):
+            for charge in range(min_charge, max_charge + 1):
                 data['peptide'].append(peptide_sequence)
                 data['protein'].append(" ".join(protein_ids))
                 data['charge'].append(charge)
@@ -150,9 +152,17 @@ if st.button("Generate Spectral Library"):
                                              intensity=None)
 
             exclusion_interval = tolerance.construct_interval(interval_id=str(fasta_file.name),
-                                                           exclusion_point=exclusion_point)
+                                                              exclusion_point=exclusion_point)
 
             interval_dict_strs.append(f'{str(exclusion_interval.dict())}\n')
 
         file_contents = ''.join(interval_dict_strs)
-        st.download_button(label='Download Interval File', data=file_contents, file_name='intervals.txt')
+
+        st.download_button(label='Download Interval File',
+                           data=file_contents,
+                           file_name='intervals.txt')
+
+        st.download_button(label="Download DataFrame",
+                           data=convert_df(df),
+                           file_name=f'{Path(fasta_file.name).stem}_spectral_lib.csv',
+                           mime='text/csv')
