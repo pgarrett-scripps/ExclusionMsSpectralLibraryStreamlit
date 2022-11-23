@@ -145,6 +145,7 @@ if st.button("Generate Spectral Library"):
 
         interval_dict_strs = []
         for i, row in df.iterrows():
+            print(row)
             exclusion_point = ExclusionPoint(charge=row['charge'],
                                              mass=row['mass'],
                                              rt=row.get('rt'),
@@ -158,7 +159,7 @@ if st.button("Generate Spectral Library"):
 
         file_contents = ''.join(interval_dict_strs)
 
-        st.download_button(label='Download Interval File',
+        st.download_button(label='Download Intervals',
                            data=file_contents,
                            file_name='intervals.txt')
 
