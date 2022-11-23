@@ -143,7 +143,7 @@ if st.button("Generate Spectral Library"):
         with st.expander('DataFrame'):
             st.dataframe(df)
 
-        interval_dict_strs = []
+        intervals = set()
         for i, row in df.iterrows():
             print(row)
             exclusion_point = ExclusionPoint(charge=row['charge'],
@@ -154,10 +154,8 @@ if st.button("Generate Spectral Library"):
 
             exclusion_interval = tolerance.construct_interval(interval_id=str(fasta_file.name),
                                                               exclusion_point=exclusion_point)
-
-            interval_dict_strs.append(f'{str(exclusion_interval.dict())}\n')
-
-        file_contents = ''.join(interval_dict_strs)
+            intervals.add(exclusion_interval)
+        file_contents = ''.join([f'{str(interval.dict())}\n' for interval in intervals])
 
         st.download_button(label='Download Intervals',
                            data=file_contents,
