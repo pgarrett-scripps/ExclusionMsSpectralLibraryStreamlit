@@ -1,5 +1,4 @@
 import time
-from pathlib import Path
 
 import pandas as pd
 import streamlit as st
@@ -160,8 +159,3 @@ if st.button("Generate Spectral Library"):
         st.download_button(label='Download Intervals',
                            data=file_contents,
                            file_name='intervals.txt')
-
-        st.download_button(label="Download DataFrame",
-                           data=convert_df(df),
-                           file_name=f'{Path(fasta_file.name).stem}_spectral_lib.csv',
-                           mime='text/csv')

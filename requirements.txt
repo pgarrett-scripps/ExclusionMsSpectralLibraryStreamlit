@@ -2,4 +2,4 @@ pyopenms==2.7.0
 pandas==1.5.1
 streamlit==1.14.0
 peptdeep==0.2.0
-exclusionms==0.0.8
+exclusionms==0.0.11
