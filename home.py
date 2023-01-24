@@ -1,5 +1,5 @@
 import time
-
+import json
 import pandas as pd
 import streamlit as st
 from pyopenms import ModificationsDB, ProteaseDigestion, AASequence
@@ -12,6 +12,7 @@ from modification.sequon_utils import apply_sequons
 from machine_learning.utils import get_mod_and_locations
 from peptdeep.pretrained_models import ModelManager
 from exclusionms.components import DynamicExclusionTolerance, ExclusionPoint
+from utils import get_tolerance
 
 st.header("Spectral Library Generator")
 st.write("Uses pyopenms and peptdeep")
@@ -49,21 +50,13 @@ with st.expander("Deep Learning"):
 
 with st.expander('Interval Tolerance'):
     # Only used with Add
-    use_exact_charge = st.checkbox('Use exact charge', value=False)
-    mass_tolerance = st.text_input(label='mass Tolerance', value='50')
-    rt_tolerance = st.text_input(label='rt Tolerance', value='100')
-    ook0_tolerance = st.text_input(label='ook0 Tolerance', value='0.05')
-    intensity_tolerance = st.text_input(label='Intensity Tolerance', value='0.5')
+    tolerance = get_tolerance()
 
 if st.button("Generate Spectral Library"):
     if not fasta_file:
         st.warning('Upload a FASTA file!')
     else:
         st.warning("Don't change params or close tab else the current process will be terminated.")
-
-        tolerance = DynamicExclusionTolerance.from_strings(exact_charge=use_exact_charge, mass_tolerance=mass_tolerance,
-                                                           rt_tolerance=rt_tolerance, ook0_tolerance=ook0_tolerance,
-                                                           intensity_tolerance=intensity_tolerance)
 
         dig = ProteaseDigestion()
         dig.setEnzyme(digestion_params.protease)
@@ -142,7 +135,7 @@ if st.button("Generate Spectral Library"):
         with st.expander('DataFrame'):
             st.dataframe(df)
 
-        intervals = set()
+        intervals = []
         for i, row in df.iterrows():
             print(row)
             exclusion_point = ExclusionPoint(charge=row['charge'],
@@ -153,8 +146,8 @@ if st.button("Generate Spectral Library"):
 
             exclusion_interval = tolerance.construct_interval(interval_id=str(fasta_file.name),
                                                               exclusion_point=exclusion_point)
-            intervals.add(exclusion_interval)
-        file_contents = ''.join([f'{str(interval.dict())}\n' for interval in intervals])
+            intervals.append(exclusion_interval)
+        file_contents = json.dumps([interval.dict() for interval in intervals])
 
         st.download_button(label='Download Intervals',
                            data=file_contents,
